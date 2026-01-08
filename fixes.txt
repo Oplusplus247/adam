@@ -1,0 +1,25 @@
+Race Conditions & Memory Leaks (helpers/kafkaHelpers.js)
+
+Fixed an issue where Kafka consumers kept running after timeouts, causing memory leaks and test interference
+Added proper cleanup to ensure consumers stop gracefully
+
+Test Stability (helpers/testBase.js)
+
+Tests were occasionally colliding when run quickly (same group IDs generated in same millisecond)
+Now using counter + process ID + timestamp combo for truly unique IDs
+
+Better Error Handling
+
+helpers/kafkaHelpers.js - Collectors now fail independently instead of taking down the whole test
+helpers/testBase.js - Empty results returned on failure instead of crashes
+helpers/logger.js - Logger won't break tests even if file writing fails
+
+Code Quality
+
+helpers/validators.js (new) - Added schema validators for all event types (discovery, violations, remediations)
+helpers/fixtures.js (new) - Created test fixtures for consistent test data across suites
+helpers/testBase.js - Added comments explaining the magic numbers (400ms, 7000ms timeouts)
+
+Test Reporter (reporters/simpleJsonReporter.js)
+
+Minor null safety improvements to handle edge cases

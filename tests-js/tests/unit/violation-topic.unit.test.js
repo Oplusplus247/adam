@@ -1,23 +1,13 @@
-const { setupJestDefaultTimeout, generateIds, createTestContext, INPUT_TOPIC, VIOLATION_TOPIC } = require('../../helpers/testBase');
+const { setupJestDefaultTimeout, createTestContext, INPUT_TOPIC, VIOLATION_TOPIC } = require('../../helpers/testBase');
 const { collectForDiscovery: collectKafkaForDiscovery, publishEvent } = require('../../helpers/kafkaHelpers');
+const { createDiscoveryEvent, scenarios } = require('../../helpers/fixtures');
+const { validateViolationEvent } = require('../../helpers/validators');
+
 setupJestDefaultTimeout(15000);
 
 test('unit: missing owner tag yields LOW violation on violation topic', async () => {
   const { kafka, logger } = createTestContext('unit-violation');
-  const { ts } = generateIds('vio');
-  const eventId = `evt-vio-${ts}`;
-  const assetId = `asset-vio-${ts}`;
-
-  const discoveryEvent = {
-    event_id: eventId,
-    timestamp: new Date().toISOString(),
-    asset_id: assetId,
-    asset_type: 'S3_BUCKET',
-    cloud_provider: 'AWS',
-    region: 'us-east-1',
-    discovered_by: 'jest',
-    metadata: { encryption_enabled: true, public_access: false, data_classification: 'INTERNAL', tags: {} }
-  };
+  const discoveryEvent = scenarios.missingOwnerTag();
 
   const collectionPromise = collectKafkaForDiscovery({
     kafka,
@@ -36,11 +26,14 @@ test('unit: missing owner tag yields LOW violation on violation topic', async ()
   const { relatedViolations } = await collectionPromise;
 
   expect(relatedViolations.length).toBeGreaterThanOrEqual(1);
-  expect(relatedViolations.some(v => v.severity === 'LOW')).toBeTruthy();
-  const v = relatedViolations[0];
-  expect(v).toHaveProperty('event_id');
-  expect(v).toHaveProperty('asset_id', assetId);
-  expect(v).toHaveProperty('violation_type', 'MISSING_OWNER_TAG');
-  expect(v).toHaveProperty('severity', 'LOW');
-  expect(v).toHaveProperty('source_event_id', eventId);
+  
+  const violation = relatedViolations.find(v => v.severity === 'LOW');
+  expect(violation).toBeDefined();
+  
+  validateViolationEvent(violation, {
+    asset_id: discoveryEvent.asset_id,
+    violation_type: 'MISSING_OWNER_TAG',
+    severity: 'LOW',
+    source_event_id: discoveryEvent.event_id,
+  });
 });

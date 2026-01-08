@@ -61,7 +61,6 @@ async function publishEvent(kafka, topic, event) {
 /* =========================
    SINGLE Kafka collector engine
    ========================= */
-
 async function _collectCore({
   kafka,
   topic,
@@ -75,10 +74,18 @@ async function _collectCore({
   const consumer = kafka.consumer({ groupId });
   const messages = [];
   let finished = false;
+  let timeoutId = null;
 
   try {
     await consumer.connect();
     await consumer.subscribe({ topic, fromBeginning });
+
+    const timeoutPromise = new Promise((resolve) => {
+      timeoutId = setTimeout(() => {
+        finished = true;
+        resolve();
+      }, timeoutMs);
+    });
 
     const completion = new Promise((resolve) => {
       consumer.run({
@@ -96,20 +103,26 @@ async function _collectCore({
 
           if (messages.length >= expectedCount) {
             finished = true;
-            await consumer.stop().catch(() => {});
+            if (timeoutId) clearTimeout(timeoutId);
             resolve();
           }
         },
       });
     });
 
-    await Promise.race([
-      completion,
-      new Promise((r) => setTimeout(r, timeoutMs)),
-    ]);
+    await Promise.race([completion, timeoutPromise]);
+    
+    await new Promise(r => setTimeout(r, 50));
 
+    logger.debug("collection complete", { topic, collected: messages.length });
     return messages;
+  } catch (err) {
+    logger.error("collection error", { topic, error: err.message });
+    throw err;
   } finally {
+    finished = true;
+    if (timeoutId) clearTimeout(timeoutId);
+    await consumer.stop().catch(() => {});
     await consumer.disconnect().catch(() => {});
   }
 }
@@ -121,7 +134,7 @@ async function collectKafka({
   predicate,
   expectedCount,
   timeoutMs = 5000,
-  groupId = `tests-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+  groupId = `tests-${Date.now()}-${process.pid}-${Math.random().toString(36).slice(2, 6)}`,
   fromBeginning = false,
 }) {
   const logger = createLogger("collectKafka");
@@ -139,23 +152,38 @@ async function collectKafka({
     return opt ?? fallback;
   };
 
-  const results = {};
-
-  await Promise.all(
-    Object.entries(topicsMap).map(async ([key, topic]) => {
-      results[key] = await _collectCore({
-        kafka,
-        topic,
-        groupId: `${groupId}-${key}`,
-        predicate: resolveOption(predicate, key, () => true),
-        expectedCount: resolveOption(expectedCount, key, Infinity),
-        timeoutMs,
-        fromBeginning,
-      });
+  const collectors = Object.entries(topicsMap).map(([key, topic]) => ({
+    key,
+    promise: _collectCore({
+      kafka,
+      topic,
+      groupId: `${groupId}-${key}`,
+      predicate: resolveOption(predicate, key, () => true),
+      expectedCount: resolveOption(expectedCount, key, Infinity),
+      timeoutMs,
+      fromBeginning,
     })
-  );
+  }));
 
-  return typeof topics === "string" ? results.default : results;
+  try {
+    const settled = await Promise.allSettled(collectors.map(c => c.promise));
+    const results = {};
+    
+    settled.forEach((result, idx) => {
+      const { key } = collectors[idx];
+      if (result.status === 'fulfilled') {
+        results[key] = result.value;
+      } else {
+        logger.error(`collector failed for ${key}`, result.reason);
+        results[key] = [];
+      }
+    });
+
+    return typeof topics === "string" ? results.default : results;
+  } catch (err) {
+    logger.error('unexpected error in collectors', err);
+    throw err;
+  }
 }
 
 

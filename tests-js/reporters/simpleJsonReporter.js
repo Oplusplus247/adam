@@ -25,20 +25,27 @@ module.exports = class SimpleJsonReporter {
   }
 
   onTestResult(test, testResult) {
+    if (!testResult) {
+      console.warn('[Reporter] Received null testResult');
+      return;
+    }
+
     this._report.stats.suites += 1;
-    this._report.stats.tests += testResult.numPassingTests + testResult.numFailingTests + testResult.numPendingTests;
-    this._report.stats.passed += testResult.numPassingTests;
-    this._report.stats.failed += testResult.numFailingTests;
-    this._report.stats.pending += testResult.numPendingTests;
+    this._report.stats.tests += (testResult.numPassingTests || 0) + 
+                                (testResult.numFailingTests || 0) + 
+                                (testResult.numPendingTests || 0);
+    this._report.stats.passed += testResult.numPassingTests || 0;
+    this._report.stats.failed += testResult.numFailingTests || 0;
+    this._report.stats.pending += testResult.numPendingTests || 0;
 
     const fileSummary = {
-      filePath: test.path,
+      filePath: test?.path || 'unknown',
       duration: testResult.perfStats?.end - testResult.perfStats?.start || null,
-      tests: testResult.testResults.map(tr => ({
-        title: tr.fullName,
-        status: tr.status,
-        duration: tr.duration,
-        failureMessages: tr.failureMessages,
+      tests: (testResult.testResults || []).map(tr => ({
+        title: tr?.fullName || 'untitled',
+        status: tr?.status || 'unknown',
+        duration: tr?.duration || null,
+        failureMessages: tr?.failureMessages || [],
       })),
     };
     this._report.files.push(fileSummary);

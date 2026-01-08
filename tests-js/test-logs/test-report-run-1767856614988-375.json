@@ -1,0 +1,35 @@
+{
+  "runId": "run-1767856614988-375",
+  "startTime": "2026-01-08T07:16:54.988Z",
+  "nodeVersion": "v20.19.3",
+  "stats": {
+    "suites": 1,
+    "tests": 1,
+    "passed": 1,
+    "failed": 0,
+    "pending": 0
+  },
+  "files": [
+    {
+      "filePath": "C:\\repos\\home-assignment-mock\\home-assignment\\tests-js\\tests\\unit\\violation-topic.unit.test.js",
+      "duration": 11220,
+      "tests": [
+        {
+          "title": "unit: missing owner tag yields LOW violation on violation topic",
+          "status": "passed",
+          "duration": 10513,
+          "failureMessages": []
+        }
+      ]
+    }
+  ],
+  "meta": {
+    "logDir": "C:\\repos\\home-assignment-mock\\home-assignment\\tests-js\\test-logs"
+  },
+  "endTime": "2026-01-08T07:17:06.295Z",
+  "resultsSummary": {
+    "success": true,
+    "totalTests": 1,
+    "totalFailed": 0
+  }
+}

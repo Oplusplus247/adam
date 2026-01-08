@@ -1,0 +1,22 @@
+{
+  "name": "home-assignment-tests",
+  "version": "1.0.0",
+  "description": "Jest integration tests for the mock DSPM service",
+  "main": "index.js",
+  "scripts": {
+    "test": "jest --runInBand"
+  },
+  "dependencies": {
+    "kafkajs": "^2.2.4",
+    "dotenv": "^16.1.4"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "jest": {
+    "reporters": [
+      "default",
+      "<rootDir>/reporters/simpleJsonReporter.js"
+    ]
+  }
+}

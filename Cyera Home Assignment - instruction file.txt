@@ -1,0 +1,66 @@
+Cyera Home Assignment 
+General Instructions 
+Time Allocation: Approximately 2-3 hours. 
+Submission: Upload your project to GitHub and share the repository link with yuval.menashe@cyera.io. 
+Testing Framework: The project must be implemented in Jest (Preferred), Pytest, or Junit. 
+Requirements: 
+1. Include a README file documenting the project structure, requirements, and instructions to run the application. 
+2. Implement logging for both normal operations and exceptional events. 
+3. Include appropriate error handling throughout the codebase. 
+4. Ensure the code runs without crashes or unhandled exceptions. 
+5. The project should include a basic automated reporting component. 
+ 
+Good luck! 
+ 
+Overview 
+Our DSPM platform utilizes an event-driven architecture with Kafka. The Policy Engine consumes asset discovery events, evaluates them against defined security policies, and produces corresponding violation and remediation events. 
+ 
+Event Flow: 
+ 
+
+ 
+Kafka Topics: 
+ 
+- dspm.discovery.asset (input) 
+- dspm.policy.violation (output) 
+- dspm.remediation.requested (output) 
+ 
+Objective: Design and build an automated test framework to validate the Policy Engine's behavior. 
+Task Description 
+You are required to design and implement an automated test framework with the following capabilities: 
+ 
+1. Publishes asset discovery events to Kafka. 
+2. Consumes violation and remediation events from Kafka. 
+3. Validates the Policy Engine's outputs. 
+ 
+Scope: 
+- High-level test plan. 
+- Implement test scenarios that cover a variety of use cases. 
+- Include multiple layers of testing, such as component and end-to-end tests. 
+- Validate aspects you deem critical (e.g., event structure, business logic, timing, event correlation). 
+ 
+Useful Information: 
+ 
+- Use the supplied mock service for integration and self-testing (see instructions below). 
+- For additional help, refer to the provided Kafka and Policies documentation files. 
+ 
+ 
+Running the Mock Service 
+Prerequisites 
+Before starting, ensure you have Docker and Docker Compose installed. 
+ 
+Note: All Python dependencies for the mock service are automatically installed inside the Docker container. You do not need to manually install `requirements.txt`. 
+Starting the Infrastructure 
+
+ 
+Allow approximately 30 seconds for all services to initialize. 
+Verifying Service Status 
+
+Kafka Configuration 
+- Bootstrap Server: localhost:9092 
+- Topics: Automatically created upon service startup 
+Viewing Logs 
+
+Stopping the Infrastructure 
+
+ 
